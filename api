@@ -1,1 +1,30 @@
 convert.js
+import fetch from 'node-fetch';
+import FormData from 'form-data';
+
+export default async function handler(req, res) {
+
+  if (req.method !== 'POST') {
+    return res.status(405).send({ error: 'Only POST requests allowed' });
+  }
+
+  const formData = new FormData();
+  formData.append('file', req.body.file);  // We'll wire the frontend later
+  formData.append('format', req.body.format);
+
+  const apiKey = process.env.CLOUDCONVERT_API_KEY;
+
+  try {
+    const response = await fetch('https://api.cloudconvert.com/v2/convert', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+      body: formData
+    });
+
+    const data = await response.json();
+    res.status(200).json({ url: data.url }); // CloudConvert returns the download URL
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Conversion failed' });
+  }
+}
